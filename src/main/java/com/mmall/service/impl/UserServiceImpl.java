@@ -45,6 +45,8 @@ public class UserServiceImpl implements IUserService {
 
 
 
+
+
     public ServerResponse<String> register(User user){
         ServerResponse validResponse=this.checkValid(user.getUsername(),Const.USERNAME);
         if(!validResponse.isSucess()){
@@ -204,6 +206,18 @@ public class UserServiceImpl implements IUserService {
         return ServerResponse.createBySucess(user);
 
 
+    }
+
+
+    public ServerResponse checkAdminRole(User user){
+        if(user!=null&&user.getRole().intValue()==Const.Role.ROLE_ADMIN){
+            return ServerResponse.createBySucess();
+        }
+
+        else
+        {
+            return ServerResponse.createByError();
+        }
     }
 
 
