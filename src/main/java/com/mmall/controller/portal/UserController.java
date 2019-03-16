@@ -5,6 +5,9 @@ import com.mmall.common.ResponseCode;
 import com.mmall.common.ServerResponse;
 import com.mmall.pojo.User;
 import com.mmall.service.IUserService;
+import com.mmall.util.Cookieutil;
+import com.mmall.util.JsonUtil;
+import com.mmall.util.RedisPoolUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.jws.soap.SOAPBinding;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.nio.channels.SeekableByteChannel;
 
@@ -28,12 +33,18 @@ public class UserController {
 
     @RequestMapping(value="login.do",method = RequestMethod.POST)
     @ResponseBody
-    public ServerResponse<User> login(String username, String password, HttpSession session)
+    public ServerResponse<User> login(String username, String password, HttpSession session, HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest)
     {
 
         ServerResponse<User> response=iUserService.login(username,password);
         if(response.isSucess()){
-            session.setAttribute(Const.CURRENT_USER,response.getData());
+
+            //session.setAttribute(Const.CURRENT_USER,response.getData());
+            Cookieutil.writeLoginToken(httpServletResponse,session.getId());
+            Cookieutil.readLoginToken(httpServletRequest);
+            Cookieutil.delLoginToken(httpServletRequest,httpServletResponse);
+            RedisPoolUtil.setEx(session.getId(), JsonUtil.obj2String(response.getData()),Const.RedisCacheExtime.REDIS_SESSION_EXTIME);
+
         }
 
         return response;
